@@ -139,6 +139,20 @@ if not DEBUG:
 
 if not USE_SQLITE and DATABASES.get("default"):
     DATABASES["default"].setdefault("CONN_MAX_AGE", 60)
+    _engine = DATABASES["default"].get("ENGINE", "")
+    if "mysql" in _engine:
+        _opts = DATABASES["default"].setdefault("OPTIONS", {})
+        _opts.setdefault("charset", "utf8mb4")
+        _opts.setdefault("init_command", "SET sql_mode='STRICT_TRANS_TABLES'")
+        _ssl_ca = config("MYSQL_SSL_CA", default="")
+        _needs_ssl = (
+            bool(_ssl_ca)
+            or config("MYSQL_SSL_REQUIRED", default=False, cast=bool)
+            or "aivencloud.com" in DATABASE_URL
+            or "ssl-mode=required" in DATABASE_URL.lower()
+        )
+        if _needs_ssl:
+            _opts.setdefault("ssl", {"ca": _ssl_ca} if _ssl_ca else {})
 
 LOGGING = {
     "version": 1,
