@@ -71,6 +71,9 @@ if USE_SQLITE:
     }
 elif DATABASE_URL:
     DATABASES = {"default": dj_database_url.parse(DATABASE_URL)}
+    _parsed_opts = DATABASES["default"].get("OPTIONS", {})
+    for _bad_key in ("ssl-mode", "ssl_mode"):
+        _parsed_opts.pop(_bad_key, None)
 else:
     DATABASES = {
         "default": {

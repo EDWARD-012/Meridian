@@ -177,10 +177,11 @@ class Command(BaseCommand):
         )
         if created:
             user.set_password("demo1234")
-            user.save()
-        elif not user.is_staff:
+        else:
+            user.set_password("demo1234")
+        if not user.is_staff:
             user.is_staff = True
-            user.save(update_fields=["is_staff"])
+        user.save()
         UserProfile.objects.get_or_create(user=user, defaults={"phone": "9876543210"})
 
         for full_name, line1, city, state, pincode, is_default in DEMO_ADDRESSES:
