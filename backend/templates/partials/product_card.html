@@ -1,0 +1,51 @@
+{% load shop_extras %}
+<article class="card" data-product-id="{{ product.id }}">
+  <a href="{% url 'product_detail' product.slug %}" class="card-link">
+    <div class="card-img">
+      {% include "partials/product_image.html" with product=product %}
+      {% if product.avg_rating and product.avg_rating >= 4.5 %}
+      <span class="card-badge">Best Seller</span>
+      {% endif %}
+    </div>
+  </a>
+  <div class="card-body">
+    <a href="{% url 'product_detail' product.slug %}"><h3 class="card-title">{{ product.name }}</h3></a>
+    {% with rc=product.review_total|default:product.review_count rating=product.avg_rating|default:product.average_rating %}
+    {% if rc %}
+    <div class="card-rating">
+      <span class="stars">{{ rating|stars }}</span>
+      <span class="muted">({{ rc }})</span>
+    </div>
+    {% endif %}
+    {% endwith %}
+    <div class="card-price-row">
+      <span class="price">₹{{ product.price|floatformat:0 }}</span>
+      <span class="mrp">₹{{ product.price|list_price }}</span>
+    </div>
+    <p class="card-delivery">FREE delivery on orders above ₹499</p>
+    {% with avail=product|available_stock:cart_items %}
+    {% if user.is_authenticated and avail > 0 %}
+      {% if cart_items|in_cart:product.id %}
+        <div class="card-qty js-cart-slot">
+          <form class="qty-inline js-cart-form" data-action="update" data-item-id="{{ cart_items|cart_item_id:product.id }}" data-product-id="{{ product.id }}">
+            {% csrf_token %}
+            <button type="submit" name="quantity" value="{{ cart_items|cart_qty:product.id|add:'-1' }}" class="btn btn-outline btn-sm">−</button>
+            <span class="qty-num">{{ cart_items|cart_qty:product.id }} in cart</span>
+            <button type="submit" name="quantity" value="{{ cart_items|cart_qty:product.id|add:'1' }}" class="btn btn-outline btn-sm"
+              {% if avail <= 0 %}disabled{% endif %}>+</button>
+          </form>
+        </div>
+      {% else %}
+        <form class="card-action js-cart-form js-cart-slot" data-action="add" data-product-id="{{ product.id }}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-amz-yellow btn-sm" style="width:100%">Add to cart</button>
+        </form>
+      {% endif %}
+    {% elif not user.is_authenticated %}
+      <a href="{% url 'login' %}?next={{ request.get_full_path }}" class="btn btn-amz-yellow btn-sm card-action" style="display:block;text-align:center">Sign in to buy</a>
+    {% else %}
+      <button class="btn btn-outline btn-sm card-action" style="width:100%" disabled>Currently unavailable</button>
+    {% endif %}
+    {% endwith %}
+  </div>
+</article>

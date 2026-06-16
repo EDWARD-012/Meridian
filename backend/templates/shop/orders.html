@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load shop_extras %}
+{% block title %}Your Orders · Meridian{% endblock %}
+{% block content %}
+<div class="container orders-page">
+
+  <nav class="breadcrumb">
+    <a href="{% url 'home' %}">Home</a> ›
+    <span>Your Orders</span>
+  </nav>
+
+  <div class="orders-head">
+    <h1 class="section-title">Your Orders</h1>
+    <p class="orders-sub">{{ orders|length }} order{{ orders|length|pluralize }} placed</p>
+  </div>
+
+  {% if orders %}
+  <div class="orders-list">
+    {% for order in orders %}
+    <article class="order-card">
+      <header class="order-card-head">
+        <div class="order-card-meta">
+          <div class="order-meta-block">
+            <span class="order-meta-label">ORDER PLACED</span>
+            <strong>{{ order.order_date|date:"d M Y" }}</strong>
+          </div>
+          <div class="order-meta-block">
+            <span class="order-meta-label">TOTAL</span>
+            <strong>₹{{ order.total_amount|floatformat:0 }}</strong>
+          </div>
+          <div class="order-meta-block">
+            <span class="order-meta-label">SHIP TO</span>
+            <strong>{{ order.address.full_name }}</strong>
+          </div>
+          <div class="order-meta-block order-meta-id">
+            <span class="order-meta-label">ORDER #</span>
+            <strong>{{ order.id }}</strong>
+          </div>
+        </div>
+        <div class="order-card-actions">
+          {% if order.payment.payment_method == 'razorpay' and order.payment.status == 'pending' and order.status == 'pending' %}
+          <a href="{% url 'razorpay_pay' order.id %}" class="btn btn-amz-yellow btn-sm">Pay now</a>
+          {% endif %}
+          <a href="{% url 'order_track' order.id %}" class="btn btn-outline btn-sm">View order details</a>
+          <a href="{% url 'order_track' order.id %}#invoice" class="btn-link">Invoice</a>
+        </div>
+      </header>
+
+      <div class="order-card-body">
+        <div class="order-card-status">
+          <span class="status-pill status-{{ order.status }}">{{ order.get_status_display }}</span>
+          <span class="payment-pill payment-{{ order.payment.status }}">{{ order.payment.get_status_display }}</span>
+        </div>
+
+        <div class="order-items-preview">
+          {% for item in order.items.all|slice:":4" %}
+          <a href="{% url 'product_detail' item.product.slug %}" class="order-thumb" title="{{ item.product.name }}">
+            <img src="{{ item.product|product_img }}" alt="{{ item.product.name }}">
+          </a>
+          {% endfor %}
+          {% if order.items.count > 4 %}
+          <span class="order-more">+{{ order.items.count|add:"-4" }} more</span>
+          {% endif %}
+        </div>
+
+        <div class="order-card-summary">
+          {% with first=order.items.first %}
+          {% if first %}
+          <p class="order-item-title">{{ first.product.name }}{% if order.items.count > 1 %} and {{ order.items.count|add:"-1" }} more item{{ order.items.count|add:"-1"|pluralize }}{% endif %}</p>
+          {% endif %}
+          {% endwith %}
+          <p class="order-delivery-hint">
+            {% if order.status == 'delivered' %}Delivered{% elif order.status == 'cancelled' %}Cancelled{% else %}Delivery in progress{% endif %}
+            · {{ order.items.count }} item{{ order.items.count|pluralize }}
+          </p>
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="empty orders-empty">
+    <div class="empty-icon">📦</div>
+    <h3>No orders yet</h3>
+    <p>When you place an order, it will appear here.</p>
+    <a href="{% url 'home' %}" class="btn btn-amz-yellow" style="margin-top:1rem">Start shopping</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

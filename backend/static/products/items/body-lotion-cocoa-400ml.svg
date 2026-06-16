@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500" role="img" aria-label="Body Lotion Cocoa 400ml">
+  <defs>
+    <linearGradient id="bg-186090619263878490871130272201577512561" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#fafafa"/>
+    </linearGradient>
+    <radialGradient id="glow-186090619263878490871130272201577512561" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#eae6fb" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#eae6fb" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="500" height="500" fill="url(#bg-186090619263878490871130272201577512561)"/>
+  <circle cx="250" cy="250" r="165" fill="url(#glow-186090619263878490871130272201577512561)"/>
+  
+  <g transform="translate(250 250) scale(0.93) rotate(3) translate(-250 -250)">
+    <rect x="215" y="165" width="70" height="145" rx="16" fill="#7c3aed"/><ellipse cx="250" cy="325" rx="52" ry="58" fill="#7c3aed" opacity=".9"/><rect x="232" y="148" width="36" height="28" rx="6" fill="#7c3aed"/>
+  </g>
+</svg>

@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+{% block title %}DB Insights · Meridian{% endblock %}
+{% block content %}
+
+<div class="db-hero">
+  <div>
+    <h1 class="section-title">Database Insights</h1>
+    <p class="db-lead">Live schema, ER diagram, app flow, SQL views &amp; triggers — for DBMS viva.</p>
+  </div>
+  <div class="db-badges">
+    <span class="db-badge">{{ meta.engine }}</span>
+    <span class="db-badge muted">{{ stats|length }} tables · {{ total_rows }} total rows</span>
+  </div>
+</div>
+
+<nav class="db-nav">
+  <a href="#flow">App Flow</a>
+  <a href="#er">ER Diagram</a>
+  <a href="#tables">Tables</a>
+  <a href="#views">SQL Views</a>
+  <a href="#triggers">Triggers</a>
+</nav>
+
+<!-- Stats overview -->
+<div class="db-stats-grid">
+  {% for item in stats %}
+  <div class="db-stat-card">
+    <span class="db-stat-label">{{ item.label }}</span>
+    <strong>{{ item.count }}</strong>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- App flow -->
+<section id="flow" class="db-section">
+  <h2 class="db-section-title">Application Flow</h2>
+  <p class="db-section-desc">How user actions map to database tables in this e-commerce system.</p>
+  <div class="db-diagram-wrap">
+    <pre class="mermaid">
+flowchart TB
+  subgraph browse["Browse &amp; Search"]
+    U([User]) --> CAT[catalog_category]
+    U --> PROD[catalog_product]
+    PROD --> IMG[catalog_productimage]
+    PROD --> REV[catalog_review]
+    PROD --> SEL[catalog_seller]
+  end
+
+  subgraph cart_flow["Cart"]
+    U --> CART[cart_cart]
+    CART --> CI[cart_cartitem]
+    CI --> PROD
+  end
+
+  subgraph checkout["Checkout &amp; Payment"]
+    U --> ADDR[orders_address]
+    CART --> ORD[orders_order]
+    ADDR --> ORD
+    ORD --> OI[orders_orderitem]
+    OI --> PROD
+    ORD --> PAY[orders_payment]
+  end
+
+  subgraph tracking["Order Tracking"]
+    ORD --> TRK[orders_ordertracking]
+    PAY -->|success| TRK
+  end
+
+  style U fill:#c8956c,color:#1a1208
+  style ORD fill:#3d5a80,color:#fff
+  style PAY fill:#528ff0,color:#fff
+    </pre>
+  </div>
+
+  <h3 class="db-subtitle">Order Status Lifecycle</h3>
+  <div class="db-diagram-wrap">
+    <pre class="mermaid">
+stateDiagram-v2
+  [*] --> pending: place_order()
+  pending --> confirmed: payment success
+  pending --> cancelled: payment failed
+  confirmed --> processing: warehouse
+  processing --> shipped: dispatch
+  shipped --> out_for_delivery: last mile
+  out_for_delivery --> delivered: delivered
+  confirmed --> cancelled: admin cancel
+  note right of pending: orders_order.status
+  note right of confirmed: orders_payment.status = success
+    </pre>
+  </div>
+
+  {% if flow.order_status %}
+  <div class="db-flow-counts">
+    <h3 class="db-subtitle">Live order status counts</h3>
+    <div class="db-pills">
+      {% for status, count in flow.order_status.items %}
+      <span class="db-pill">{{ status }}: <strong>{{ count }}</strong></span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+<!-- ER Diagram -->
+<section id="er" class="db-section">
+  <h2 class="db-section-title">Entity–Relationship Diagram</h2>
+  <p class="db-section-desc">Real Django models / MySQL tables with foreign-key relationships.</p>
+  <div class="db-diagram-wrap db-diagram-wide">
+    <pre class="mermaid">
+erDiagram
+  auth_user ||--o| cart_cart : "1:1"
+  auth_user ||--o{ orders_address : "has"
+  auth_user ||--o{ orders_order : "places"
+  auth_user ||--o{ catalog_review : "writes"
+  auth_user ||--o| accounts_userprofile : "1:1"
+
+  catalog_category ||--o{ catalog_product : "contains"
+  catalog_seller ||--o{ catalog_product : "sells"
+  catalog_product ||--o{ catalog_productimage : "gallery"
+  catalog_product ||--o{ catalog_review : "rated"
+  catalog_product ||--o{ cart_cartitem : "in cart"
+  catalog_product ||--o{ orders_orderitem : "ordered"
+
+  cart_cart ||--o{ cart_cartitem : "line items"
+
+  orders_address ||--o{ orders_order : "ships to"
+  orders_order ||--o{ orders_orderitem : "contains"
+  orders_order ||--|| orders_payment : "1:1"
+  orders_order ||--o{ orders_ordertracking : "timeline"
+    </pre>
+  </div>
+</section>
+
+<!-- Real tables -->
+<section id="tables" class="db-section">
+  <h2 class="db-section-title">Real Tables &amp; Sample Data</h2>
+  <p class="db-section-desc">Column definitions from Django models with live row counts and sample rows from {{ meta.engine }}.</p>
+
+  {% for schema in schemas %}
+  <details class="db-table-card" {% if forloop.first %}open{% endif %}>
+    <summary>
+      <code>{{ schema.table }}</code>
+      <span class="db-table-meta">{{ schema.label }} · {{ schema.row_count }} rows · {{ schema.fields|length }} columns</span>
+    </summary>
+
+    <div class="db-table-body">
+      <h4>Schema</h4>
+      <div class="table-wrap">
+        <table class="data-table db-schema-table">
+          <thead>
+            <tr><th>Column</th><th>Type</th><th>Nullable</th><th>FK →</th></tr>
+          </thead>
+          <tbody>
+            {% for f in schema.fields %}
+            <tr>
+              <td><code>{{ f.name }}</code>{% if f.unique %} <span class="db-tag">UNIQUE</span>{% endif %}</td>
+              <td>{{ f.type }}</td>
+              <td>{% if f.nullable %}yes{% else %}no{% endif %}</td>
+              <td>{% if f.fk %}<code>{{ f.fk }}</code>{% else %}—{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if schema.sample %}
+      <h4>Sample rows <span class="muted">(latest {{ schema.sample|length }})</span></h4>
+      <div class="table-wrap">
+        <table class="data-table db-sample-table">
+          <thead>
+            <tr>
+              {% for col in schema.sample.0.keys %}
+              <th>{{ col }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in schema.sample %}
+            <tr>
+              {% for val in row.values %}
+              <td>{{ val }}</td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="field-hint">No rows yet — add data via seed or checkout flow.</p>
+      {% endif %}
+    </div>
+  </details>
+  {% endfor %}
+</section>
+
+<!-- SQL Views -->
+<section id="views" class="db-section">
+  <h2 class="db-section-title">SQL Views</h2>
+  <p class="db-section-desc">
+    Defined in <code>sql_scripts/views.sql</code>.
+    {% if meta.views_from_sql %}
+    Results from MySQL views.
+    {% else %}
+    Running on {{ meta.engine }} — showing equivalent live query results (run <code>views.sql</code> on MySQL for native views).
+    {% endif %}
+  </p>
+
+  {% for view in views %}
+  <div class="db-view-card">
+    <div class="db-view-head">
+      <h3><code>{{ view.key }}</code> — {{ view.title }}</h3>
+      <span class="db-badge {% if view.source == 'sql' %}ok{% endif %}">{{ view.source|upper }}</span>
+    </div>
+    <p class="db-section-desc">{{ view.description }}</p>
+    <pre class="db-sql"><code>{{ view.sql }}</code></pre>
+
+    {% if view.rows %}
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr>{% for col in view.columns %}<th>{{ col }}</th>{% endfor %}</tr></thead>
+        <tbody>
+          {% for row in view.rows %}
+          <tr>
+            {% for cell in row %}
+            <td>{{ cell }}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="field-hint">No data yet — place an order or add items to cart to populate this view.</p>
+    {% endif %}
+  </div>
+  {% endfor %}
+</section>
+
+<!-- Triggers -->
+<section id="triggers" class="db-section">
+  <h2 class="db-section-title">MySQL Triggers</h2>
+  <p class="db-section-desc">Defined in <code>sql_scripts/triggers.sql</code> — run on cloud MySQL after deploy.</p>
+
+  {% for trg in triggers %}
+  <div class="db-trigger-card">
+    <div class="db-view-head">
+      <h3><code>{{ trg.name }}</code></h3>
+      <span class="db-badge">{{ trg.event }}</span>
+    </div>
+    <p>Table: <code>{{ trg.table }}</code></p>
+    <p class="db-section-desc">{{ trg.description }}</p>
+  </div>
+  {% endfor %}
+
+  <details class="db-table-card">
+    <summary><code>triggers.sql</code> — full source</summary>
+    <pre class="db-sql"><code>-- trg_orderitem_reduce_stock: AFTER INSERT on orders_orderitem
+UPDATE catalog_product SET stock_quantity = stock_quantity - NEW.quantity
+WHERE id = NEW.product_id AND stock_quantity >= NEW.quantity;
+
+-- trg_order_status_track: AFTER UPDATE on orders_order
+IF OLD.status != NEW.status THEN
+  INSERT INTO orders_ordertracking (order_id, status, message, location, recorded_at)
+  VALUES (NEW.id, NEW.status, CONCAT('Status updated to ', NEW.status), 'System', NOW(6));
+END IF;</code></pre>
+  </details>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#3d5a80',
+      primaryTextColor: '#ece8e1',
+      primaryBorderColor: '#c8956c',
+      lineColor: '#8a919c',
+      secondaryColor: '#181c24',
+      tertiaryColor: '#1f2530',
+      fontFamily: 'Segoe UI, system-ui, sans-serif',
+    },
+    flowchart: { curve: 'basis', padding: 16 },
+    er: { layoutDirection: 'TB' },
+  });
+</script>
+{% endblock %}

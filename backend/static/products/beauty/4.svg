@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500" role="img" aria-label="Beauty &amp; Care">
+  <rect width="500" height="500" fill="#efeaf5"/>
+  <rect x="36" y="36" width="428" height="428" rx="18" fill="#ffffff" stroke="#8d70b9" stroke-width="2" opacity="0.95"/>
+  <g transform="translate(250 230) scale(0.88) rotate(6) translate(-250 -230)">
+    <ellipse cx="250" cy="300" rx="62" ry="82" fill="#8d70b9" opacity="0.85"/><rect x="215" y="125" width="70" height="125" rx="12" fill="#8d70b9" opacity="0.7"/><rect x="232" y="108" width="36" height="28" rx="6" fill="#8d70b9" opacity="0.55"/>
+  </g>
+  <text x="250" y="455" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="21" fill="#555">Beauty &amp; Care</text>
+</svg>

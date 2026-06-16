@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load shop_extras %}
+{% block title %}Your Cart · Meridian{% endblock %}
+{% block content %}
+<div class="container">
+  <h1 class="section-title">Shopping Cart</h1>
+  {% if cart.items.all %}
+  <div class="layout-2">
+    <div class="cart-items">
+      {% for item in cart.items.all %}
+      <div class="cart-row">
+        <a href="{% url 'product_detail' item.product.slug %}">
+          <img src="{{ item.product|product_img }}" alt="{{ item.product.name }}">
+        </a>
+        <div class="cart-item-info">
+          <a href="{% url 'product_detail' item.product.slug %}"><strong>{{ item.product.name }}</strong></a>
+          <p class="cart-item-price">₹{{ item.product.price|floatformat:0 }}</p>
+          <p class="card-delivery">Eligible for FREE Delivery</p>
+          <div class="cart-item-actions">
+            <form class="qty-form" action="{% url 'cart_update' item.id %}" method="post">
+              {% csrf_token %}
+              <label>Qty:</label>
+              <select name="quantity" onchange="this.form.submit()">
+                {% cart_qty_range item as qty_range %}
+                {% for n in qty_range %}
+                <option value="{{ n }}" {% if item.quantity == n %}selected{% endif %}>{{ n }}</option>
+                {% endfor %}
+              </select>
+            </form>
+            <span class="cart-divider">|</span>
+            <form action="{% url 'cart_remove' item.id %}" method="post" class="inline-form">
+              {% csrf_token %}
+              <button type="submit" class="btn-link">Delete</button>
+            </form>
+          </div>
+        </div>
+        <div class="cart-item-total">₹{{ item.line_total|floatformat:0 }}</div>
+      </div>
+      {% endfor %}
+      <p class="cart-subtotal-line">Subtotal ({{ cart.total_items }} items): <strong>₹{{ subtotal|floatformat:0 }}</strong></p>
+    </div>
+    <div class="summary buybox-summary">
+      <p class="summary-total-label">Subtotal ({{ cart.total_items }} items):</p>
+      <p class="summary-total-amount">₹{{ subtotal|floatformat:0 }}</p>
+      <label class="gift-check"><input type="checkbox" disabled> This order contains a gift</label>
+      <a href="{% url 'checkout' %}" class="btn btn-amz-yellow" style="width:100%;margin-top:0.75rem">Proceed to Buy</a>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty">
+    <h3>Your Meridian Cart is empty</h3>
+    <a href="{% url 'home' %}" class="btn btn-amz-yellow" style="margin-top:1rem">Continue shopping</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

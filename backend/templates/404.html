@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Page not found · Meridian{% endblock %}
+{% block content %}
+<div class="container empty" style="padding:4rem 1rem">
+  <h1>Looking for something?</h1>
+  <p>We couldn't find that page. Try searching or go back to the homepage.</p>
+  <a href="{% url 'home' %}" class="btn btn-amz-yellow" style="margin-top:1rem">Go to Meridian home</a>
+</div>
+{% endblock %}

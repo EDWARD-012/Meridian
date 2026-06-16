@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500" role="img" aria-label="Winter Hoodie Grey">
+  <defs>
+    <linearGradient id="bg-327362696129573668610034896913265945466" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#fafafa"/>
+    </linearGradient>
+    <radialGradient id="glow-327362696129573668610034896913265945466" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#f8e3ef" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#f8e3ef" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="500" height="500" fill="url(#bg-327362696129573668610034896913265945466)"/>
+  <circle cx="250" cy="250" r="165" fill="url(#glow-327362696129573668610034896913265945466)"/>
+  
+  <g transform="translate(250 250) scale(0.9400000000000001) rotate(-1) translate(-250 -250)">
+    <path d="M250 155 L320 195 L305 220 L305 345 L195 345 L195 220 L180 195 Z" fill="#b90d37"/>
+  </g>
+</svg>

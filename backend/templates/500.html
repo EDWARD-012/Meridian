@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Error · Meridian{% endblock %}
+{% block content %}
+<div class="container empty" style="padding:4rem 1rem">
+  <h1>Something went wrong</h1>
+  <p>We're working on it. Please try again in a moment.</p>
+  <a href="{% url 'home' %}" class="btn btn-amz-yellow" style="margin-top:1rem">Back to home</a>
+</div>
+{% endblock %}

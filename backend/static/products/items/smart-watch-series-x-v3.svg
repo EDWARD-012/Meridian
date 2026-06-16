@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500" role="img" aria-label="Smart Watch Series X">
+  <defs>
+    <linearGradient id="bg-155212531404434491027753381421462701505" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f8fafc"/>
+    </linearGradient>
+    <radialGradient id="glow-155212531404434491027753381421462701505" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#dcebff" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#dcebff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="500" height="500" fill="url(#bg-155212531404434491027753381421462701505)"/>
+  <circle cx="250" cy="250" r="165" fill="url(#glow-155212531404434491027753381421462701505)"/>
+  <rect x="24" y="24" width="96" height="30" rx="6" fill="#2c6af2"/><text x="72" y="44" text-anchor="middle" font-family="system-ui,Arial,sans-serif" font-size="12" font-weight="600" fill="#fff">Detail</text>
+  <g transform="translate(250 250) scale(0.93) rotate(13) translate(-250 -250)">
+    <rect x="200" y="195" width="100" height="120" rx="22" fill="#2c6af2"/><rect x="218" y="218" width="64" height="74" rx="10" fill="#fff" opacity=".45"/>
+  </g>
+</svg>

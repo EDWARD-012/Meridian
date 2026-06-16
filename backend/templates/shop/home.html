@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Meridian — Online Shopping{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  {% if not query and not active_category %}
+  <section class="hero-banner">
+    <div class="hero-banner-text">
+      <h1>Great deals, delivered fast</h1>
+      <p>Electronics, fashion, books, sports &amp; beauty — thousands of products with secure checkout.</p>
+      <a href="#products" class="btn btn-amz-yellow">Shop deals</a>
+    </div>
+  </section>
+
+  <section class="category-tiles">
+    {% for cat in categories %}
+    <a href="?category={{ cat.slug }}" class="cat-tile">
+      <span class="cat-tile-name">{{ cat.name }}</span>
+      <span class="cat-tile-count">{{ cat.product_count }} items</span>
+    </a>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <section id="products" class="products-section">
+    <div class="products-head">
+      <h2 class="section-title">
+        {% if query %}Results for "{{ query }}"{% elif active_category %}{{ active_category_name }}{% else %}Today's deals{% endif %}
+        <span class="muted">({{ page_obj.paginator.count }} products)</span>
+      </h2>
+      <form class="sort-form" method="get">
+        {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+        {% if active_category %}<input type="hidden" name="category" value="{{ active_category }}">{% endif %}
+        <label>Sort by</label>
+        <select name="sort" onchange="this.form.submit()">
+          <option value="featured" {% if sort == 'featured' %}selected{% endif %}>Featured</option>
+          <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+          <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+          <option value="rating" {% if sort == 'rating' %}selected{% endif %}>Avg. Customer Review</option>
+        </select>
+      </form>
+    </div>
+
+    {% if products %}
+    <div class="grid">
+      {% for product in products %}
+        {% include "partials/product_card.html" %}
+      {% endfor %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <nav class="pagination" aria-label="Product pages">
+      {% if page_obj.has_previous %}
+      <a href="?{% if query %}q={{ query }}&{% endif %}{% if active_category %}category={{ active_category }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}page={{ page_obj.previous_page_number }}" class="btn btn-outline btn-sm">← Previous</a>
+      {% endif %}
+      <span class="page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+      <a href="?{% if query %}q={{ query }}&{% endif %}{% if active_category %}category={{ active_category }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}page={{ page_obj.next_page_number }}" class="btn btn-outline btn-sm">Next →</a>
+      {% endif %}
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="empty">
+      <h3>No products found</h3>
+      <p>Try another search or <a href="{% url 'home' %}">browse all categories</a>.</p>
+    </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

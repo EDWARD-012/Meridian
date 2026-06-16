@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% load shop_extras %}
+{% block title %}{{ product.name }} · Meridian{% endblock %}
+{% block content %}
+<div class="container">
+<nav class="breadcrumb">
+  <a href="{% url 'home' %}">Home</a> ›
+  <a href="{% url 'home' %}?category={{ product.category.slug }}">{{ product.category.name }}</a> ›
+  <span>{{ product.name|truncatechars:40 }}</span>
+</nav>
+
+<div class="amazon-layout">
+  <!-- Left: Image gallery -->
+  <div class="amazon-gallery">
+    {% if gallery %}
+    <div class="gallery-main">
+      <img id="gallery-main-img" src="{{ gallery.0.image_url }}" alt="{{ gallery.0.alt_text }}" class="amazon-main-img"
+           onerror="this.onerror=null;this.src='{{ product|product_img }}';">
+    </div>
+    <div class="gallery-thumbs">
+      {% for img in gallery %}
+      <button type="button" class="gallery-thumb {% if forloop.first %}active{% endif %}"
+              data-src="{{ img.image_url }}" data-alt="{{ img.alt_text }}" aria-label="View image {{ forloop.counter }}">
+        <img src="{{ img.image_url }}" alt="{{ img.alt_text }}"
+             onerror="this.onerror=null;this.src='{{ product|product_img }}';">
+      </button>
+      {% endfor %}
+    </div>
+    {% else %}
+    {% include "partials/product_image.html" with product=product css_class="amazon-main-img" %}
+    {% endif %}
+  </div>
+
+  <!-- Center: Info -->
+  <div class="amazon-info">
+    <h1 class="amazon-title">{{ product.name }}</h1>
+    <div class="amazon-rating-row">
+      <span class="stars">{{ product.average_rating|stars }}</span>
+      <a href="#reviews" class="rating-link">{{ product.review_count }} ratings</a>
+    </div>
+    <hr class="amazon-divider">
+    <p class="amazon-price">₹{{ product.price|floatformat:0 }}</p>
+
+    <div class="about-box">
+      <h3>About this item</h3>
+      <p class="product-desc">{{ product.description }}</p>
+      {% if product.highlights %}
+      <ul class="highlights-list">
+        {% for line in product.highlights.splitlines %}
+          {% if line %}<li>{{ line }}</li>{% endif %}
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+
+    {% with avail=product|available_stock:cart_items %}
+    <div class="stock-panel {% if avail <= 5 %}low{% endif %}">
+      <div class="stock-row highlight"><span>Available</span><strong>{{ avail }} in stock</strong></div>
+    </div>
+    {% endwith %}
+  </div>
+
+  <!-- Right: Buy box + Seller -->
+  <div class="amazon-buybox">
+    <p class="buybox-price">₹{{ product.price|floatformat:0 }}</p>
+    <p class="buybox-delivery">FREE delivery on orders above ₹499</p>
+
+    {% with avail=product|available_stock:cart_items %}
+    <div id="buybox-cart">
+    {% if user.is_authenticated and avail > 0 %}
+      {% if cart_items|in_cart:product.id %}
+        <div class="buybox-in-cart">✓ {{ cart_items|cart_qty:product.id }} in cart</div>
+        <form class="qty-inline js-cart-form buybox-qty" data-action="update" data-item-id="{{ cart_items|cart_item_id:product.id }}" data-product-id="{{ product.id }}">
+          {% csrf_token %}
+          <button type="submit" name="quantity" value="{{ cart_items|cart_qty:product.id|add:'-1' }}" class="btn btn-outline btn-sm">−</button>
+          <span class="qty-num">{{ cart_items|cart_qty:product.id }}</span>
+          <button type="submit" name="quantity" value="{{ cart_items|cart_qty:product.id|add:'1' }}" class="btn btn-outline btn-sm"
+            {% if avail <= 0 %}disabled{% endif %}>+</button>
+        </form>
+      {% else %}
+        <form class="js-cart-form" data-action="add" data-product-id="{{ product.id }}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-amz-yellow" style="width:100%;margin-bottom:0.5rem">Add to Cart</button>
+        </form>
+      {% endif %}
+    {% elif not user.is_authenticated %}
+      <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-amz-yellow" style="width:100%;display:block;text-align:center">Sign in to buy</a>
+    {% else %}
+      <button class="btn btn-outline" style="width:100%" disabled>Currently unavailable</button>
+    {% endif %}
+    </div>
+    {% if user.is_authenticated and avail > 0 %}
+      <form action="{% url 'buy_now' product.id %}" method="post" style="margin-top:0.35rem">
+        {% csrf_token %}
+        <input type="hidden" name="quantity" value="1">
+        <button type="submit" class="btn btn-outline" style="width:100%">Buy Now</button>
+      </form>
+    {% endif %}
+    {% endwith %}
+    {% if product.seller %}
+    <div class="seller-box">
+      <h4>Seller information</h4>
+      <p class="seller-name">
+        {% if product.seller.verified %}<span class="seller-badge">✓ Verified</span>{% endif %}
+        <strong>{{ product.seller.name }}</strong>
+      </p>
+      <div class="seller-meta">
+        <span>{{ product.seller.rating|stars }} ({{ product.seller.total_ratings }} ratings)</span>
+        <span>{{ product.seller.total_sales }}+ sales</span>
+      </div>
+      <p class="seller-detail">{{ product.seller.fulfillment }} · Ships from {{ product.seller.city }}</p>
+      <p class="seller-detail">Member since {{ product.seller.member_since|date:"M Y" }}</p>
+      <p class="seller-desc">{{ product.seller.description }}</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<section class="reviews-section" id="reviews">
+  <h2 class="section-title">Customer reviews</h2>
+  <div class="reviews-layout">
+    <div class="reviews-summary">
+      <div class="reviews-avg">{{ product.average_rating }}</div>
+      <div class="stars big">{{ product.average_rating|stars }}</div>
+      <p class="muted">{{ product.review_count }} global ratings</p>
+      {% for s in star_list %}
+        <div class="rating-bar-row">
+          <span>{{ s }} star</span>
+          <div class="rating-bar"><div class="rating-fill" style="width:{{ reviews|star_percent:s }}%"></div></div>
+          <span>{{ reviews|star_percent:s }}%</span>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="reviews-list">
+      {% for review in reviews %}
+      <article class="review-card">
+        <div class="review-head">
+          <strong>{{ review.user.username }}</strong>
+          {% if review.verified_purchase %}<span class="verified-badge">Verified Purchase</span>{% endif %}
+        </div>
+        <div class="stars">{{ review.rating|stars }}</div>
+        <h4>{{ review.title }}</h4>
+        <p>{{ review.comment }}</p>
+        <p class="review-date">{{ review.created_at|date:"d M Y" }} · {{ review.helpful_count }} found helpful</p>
+      </article>
+      {% empty %}
+      <p class="muted">No reviews yet. Be the first to review!</p>
+      {% endfor %}
+
+      {% if user.is_authenticated and not user_review and review_form %}
+      <div class="review-form-box">
+        <h3>Write a review</h3>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="submit_review" value="1">
+          {% for field in review_form %}
+          <div class="field">
+            <label>{{ field.label }}</label>
+            {{ field }}
+            {{ field.errors }}
+          </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-primary">Submit review</button>
+        </form>
+      </div>
+      {% elif user_review %}
+      <p class="field-hint">You already reviewed this product.</p>
+      {% elif not user.is_authenticated %}
+      <p><a href="{% url 'login' %}?next={{ request.path }}">Login</a> to write a review.</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% if related_products %}
+<section class="related-section">
+  <h2 class="section-title">Customers who viewed this also viewed</h2>
+  <div class="grid">
+    {% for product in related_products %}
+      {% include "partials/product_card.html" %}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% load static %}
+<script src="{% static 'js/gallery.js' %}"></script>
+{% endblock %}

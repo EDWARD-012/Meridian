@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load shop_extras %}
+{% block title %}Checkout · Meridian{% endblock %}
+{% block content %}
+<h1 class="section-title">Checkout</h1>
+<div class="layout-2">
+  <form method="post" class="form-box checkout-form" style="max-width:100%" id="checkout-form">
+    {% csrf_token %}
+    <input type="hidden" name="checkout_token" value="{{ checkout_token }}">
+    <h2>Shipping &amp; Payment</h2>
+
+    {% if form.fields.saved_address.queryset %}
+    <fieldset class="address-section">
+      <legend>Saved addresses (from DB)</legend>
+      <label class="address-toggle">
+        {{ form.use_saved }} Use a saved address
+      </label>
+      <div class="saved-address-list" id="saved-address-list">
+        {% for addr in form.fields.saved_address.queryset %}
+        <label class="address-card">
+          <input type="radio" name="saved_address" value="{{ addr.id }}"
+            {% if form.saved_address.value|stringformat:"s" == addr.id|stringformat:"s" %}checked{% endif %}>
+          <div>
+            <strong>{{ addr.full_name }}</strong>
+            <p>{{ addr.line1 }}, {{ addr.city }}, {{ addr.state }} — {{ addr.pincode }}</p>
+            {% if addr.is_default %}<span class="pill pending">Default</span>{% endif %}
+          </div>
+        </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+    {% endif %}
+
+    <fieldset class="address-section" id="new-address-section">
+      <legend>New shipping address</legend>
+      {% for field in address_form %}
+      <div class="field">
+        <label>{{ field.label }}</label>
+        {{ field }}
+        {{ field.errors }}
+      </div>
+      {% endfor %}
+    </fieldset>
+
+    <div class="field">
+      <label>{{ form.payment_method.label }}</label>
+      {{ form.payment_method }}
+      <p class="field-hint">Pay securely with UPI, cards, or netbanking via Razorpay.</p>
+    </div>
+
+    {{ form.non_field_errors }}
+    <button type="submit" class="btn btn-primary" id="checkout-submit" style="width:100%;margin-top:0.5rem">Place order · ₹{{ subtotal|floatformat:0 }}</button>
+  </form>
+
+  <div class="summary">
+    <h3>Cart summary (DB)</h3>
+    {% for item in cart.items.all %}
+    <div class="summary-row"><span>{{ item.product.name }} × {{ item.quantity }}</span><span>₹{{ item.line_total|floatformat:0 }}</span></div>
+    {% endfor %}
+    <div class="summary-row total"><span>Total</span><span>₹{{ subtotal|floatformat:0 }}</span></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% load static %}
+<script src="{% static 'js/checkout.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500" role="img" aria-label="Python Crash Course">
+  <defs>
+    <linearGradient id="bg-42307780373106778635870582803547620477" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#fafafa"/>
+    </linearGradient>
+    <radialGradient id="glow-42307780373106778635870582803547620477" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#cef7e2" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#cef7e2" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="500" height="500" fill="url(#bg-42307780373106778635870582803547620477)"/>
+  <circle cx="250" cy="250" r="165" fill="url(#glow-42307780373106778635870582803547620477)"/>
+  <rect x="24" y="24" width="96" height="30" rx="6" fill="#0e8261"/><text x="72" y="44" text-anchor="middle" font-family="system-ui,Arial,sans-serif" font-size="12" font-weight="600" fill="#fff">Front</text>
+  <g transform="translate(250 250) scale(0.9700000000000001) rotate(7) translate(-250 -250)">
+    <circle cx="250" cy="250" r="78" fill="#0e8261" opacity=".18"/><circle cx="250" cy="250" r="52" fill="#0e8261" opacity=".55"/>
+  </g>
+</svg>

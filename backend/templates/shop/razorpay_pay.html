@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Razorpay · Order #{{ order.id }}</title>
+  {% load static %}
+  <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'css/razorpay.css' %}">
+</head>
+<body>
+
+  <div class="overlay" id="overlay"></div>
+
+  <div class="checkout" id="checkout">
+    <!-- ── Header (always visible) ── -->
+    <header class="header">
+      <div class="header-left">
+        <span class="rzp-wordmark">Razorpay</span>
+        <span class="test-badge">Test Mode</span>
+      </div>
+      <button type="button" class="btn-close" id="btn-close" aria-label="Close">&times;</button>
+    </header>
+
+    <!-- ── Amount bar ── -->
+    <div class="amount-bar" id="amount-bar">
+      <div class="amount-bar-left">
+        <span class="merchant">Meridian Shop</span>
+        <span class="order-ref">Order #{{ order.id }} · {{ item_count }} item{{ item_count|pluralize }}</span>
+      </div>
+      <span class="amount">₹{{ order.total_amount|floatformat:2 }}</span>
+    </div>
+
+    <!-- ═══ SCREEN: Checkout ═══ -->
+    <div class="screen screen-active" id="screen-checkout">
+      <nav class="tabs" role="tablist">
+        <button type="button" class="tab tab-active" data-tab="upi">UPI</button>
+        <button type="button" class="tab" data-tab="card">Cards</button>
+        <button type="button" class="tab" data-tab="netbanking">Netbanking</button>
+        <button type="button" class="tab" data-tab="wallet">Wallet</button>
+        <span class="tab-line" id="tab-line"></span>
+      </nav>
+
+      <div class="screen-body">
+        <!-- UPI -->
+        <div class="panel panel-active" id="panel-upi">
+          <label class="field-label">Enter UPI ID</label>
+          <div class="field-wrap">
+            <input type="text" class="field" id="upi-id" placeholder="example@okhdfcbank" autocomplete="off">
+            <button type="button" class="field-action" id="upi-verify">Verify</button>
+          </div>
+          <p class="hint" id="upi-status"></p>
+
+          <p class="section-label">Pay using UPI app</p>
+          <div class="app-row">
+            <button type="button" class="app-btn" data-app="phonepe">
+              <span class="app-fallback pp">Pe</span>
+              <span>PhonePe</span>
+            </button>
+            <button type="button" class="app-btn" data-app="gpay">
+              <span class="app-fallback gp">G</span>
+              <span>Google Pay</span>
+            </button>
+            <button type="button" class="app-btn" data-app="paytm">
+              <span class="app-fallback pt">Pa</span>
+              <span>Paytm</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Card -->
+        <div class="panel" id="panel-card">
+          <label class="field-label">Card Number</label>
+          <input type="text" class="field" id="card-num" placeholder="1234 1234 1234 1234" maxlength="19" inputmode="numeric">
+          <div class="field-row">
+            <div>
+              <label class="field-label">Expiry</label>
+              <input type="text" class="field" id="card-exp" placeholder="MM / YY" maxlength="7">
+            </div>
+            <div>
+              <label class="field-label">CVV</label>
+              <input type="password" class="field" id="card-cvv" placeholder="CVV" maxlength="3" inputmode="numeric">
+            </div>
+          </div>
+          <label class="field-label">Name on card</label>
+          <input type="text" class="field" id="card-name" placeholder="John Doe">
+          <p class="hint">Test: 4111 1111 1111 1111 · any expiry · CVV 000 = fail</p>
+        </div>
+
+        <!-- Netbanking -->
+        <div class="panel" id="panel-netbanking">
+          <label class="field-label">Popular Banks</label>
+          <div class="bank-list">
+            <button type="button" class="bank-btn" data-bank="hdfc"><span class="bank-dot hdfc"></span>HDFC Bank</button>
+            <button type="button" class="bank-btn" data-bank="icici"><span class="bank-dot icici"></span>ICICI Bank</button>
+            <button type="button" class="bank-btn" data-bank="sbi"><span class="bank-dot sbi"></span>State Bank of India</button>
+            <button type="button" class="bank-btn" data-bank="axis"><span class="bank-dot axis"></span>Axis Bank</button>
+            <button type="button" class="bank-btn" data-bank="kotak"><span class="bank-dot kotak"></span>Kotak Mahindra</button>
+          </div>
+        </div>
+
+        <!-- Wallet -->
+        <div class="panel" id="panel-wallet">
+          <div class="wallet-list">
+            <button type="button" class="wallet-btn"><span class="app-fallback pt">Pa</span>Paytm Wallet</button>
+            <button type="button" class="wallet-btn"><span class="app-fallback am">A</span>Amazon Pay</button>
+            <button type="button" class="wallet-btn"><span class="app-fallback ml">M</span>Mobikwik</button>
+          </div>
+        </div>
+      </div>
+
+      <footer class="footer">
+        <button type="button" class="btn-pay" id="btn-pay">Pay ₹{{ order.total_amount|floatformat:2 }}</button>
+        <p class="footer-secure">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="#27ae60"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2z"/></svg>
+          Secured by Razorpay
+        </p>
+      </footer>
+    </div>
+
+    <!-- ═══ SCREEN: Processing ═══ -->
+    <div class="screen" id="screen-processing">
+      <div class="screen-center">
+        <div class="loader"></div>
+        <h2 class="status-heading" id="proc-heading">Processing payment</h2>
+        <p class="status-text" id="proc-text">Please do not press back or refresh this page</p>
+        <div class="loader-bar"><div class="loader-bar-fill" id="proc-fill"></div></div>
+      </div>
+    </div>
+
+    <!-- ═══ SCREEN: Success ═══ -->
+    <div class="screen" id="screen-success">
+      <div class="screen-center">
+        <div class="icon-success">
+          <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="36" fill="#eafaf1" stroke="#27ae60" stroke-width="2"/><path d="M24 41l10 10 22-22" fill="none" stroke="#27ae60" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h2 class="status-heading">Payment Successful</h2>
+        <p class="status-text" id="success-txn"></p>
+        <p class="status-sub">Redirecting you back…</p>
+      </div>
+    </div>
+
+    <!-- ═══ SCREEN: Failed ═══ -->
+    <div class="screen" id="screen-failed">
+      <div class="screen-center">
+        <div class="icon-failed">
+          <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="36" fill="#fdf0ef" stroke="#e74c3c" stroke-width="2"/><path d="M28 28l24 24M52 28L28 52" stroke="#e74c3c" stroke-width="3.5" stroke-linecap="round"/></svg>
+        </div>
+        <h2 class="status-heading">Payment Failed</h2>
+        <p class="status-text" id="fail-msg">Your payment could not be completed</p>
+        <button type="button" class="btn-pay btn-retry" id="btn-retry">Try Again</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    window.RZP = {
+      confirmUrl: "{% url 'razorpay_confirm' order.id %}",
+      redirectUrl: "{% url 'order_track' order.id %}",
+      csrfToken: "{{ csrf_token }}",
+      amount: "{{ order.total_amount|floatformat:2 }}",
+    };
+  </script>
+  <script src="{% static 'js/razorpay-demo.js' %}"></script>
+</body>
+</html>

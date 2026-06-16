@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Login · Meridian{% endblock %}
+{% block content %}
+<div class="container">
+<form method="post" class="form-box">
+  {% csrf_token %}
+  <h2>Sign in</h2>
+  {% if form.errors %}
+    <p class="form-error">Invalid username or password.</p>
+  {% endif %}
+  <div class="field">
+    <label>Email or mobile phone number</label>
+    <input type="text" name="username" required autofocus class="field-input">
+  </div>
+  <div class="field">
+    <label>Password</label>
+    <input type="password" name="password" required class="field-input">
+  </div>
+  <button type="submit" class="btn btn-amz-yellow" style="width:100%">Sign in</button>
+  {% if debug %}
+  <p class="form-note">Demo account: <strong>demo / demo1234</strong></p>
+  {% endif %}
+  <p class="form-note">New customer? <a href="{% url 'register' %}">Create your Meridian account</a></p>
+</form>
+</div>
+{% endblock %}

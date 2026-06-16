@@ -1,0 +1,8 @@
+{% load shop_extras static %}
+<img
+  src="{{ product|product_img }}"
+  alt="{{ product.name }}"
+  loading="lazy"
+  class="{{ css_class|default:'' }}"
+  onerror="this.onerror=null;this.src='{% static 'favicon.svg' %}';"
+>

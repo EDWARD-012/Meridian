@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>E-Commerce DBMS — Complete Design Schemas</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600&family=Fraunces:wght@600&display=swap');
+    body { font-family: 'DM Sans', sans-serif; background: #f4f6f8; color: #1a1a2e; margin: 0; }
+    .page { max-width: 960px; margin: 0 auto; background: #fff; padding: 48px; }
+    @media print { .page { padding: 24px; } .no-print { display: none; } .break { page-break-before: always; } }
+    h1 { font-family: Fraunces, serif; color: #1e40af; text-align: center; }
+    h2 { color: #1e40af; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-top: 40px; }
+    p { color: #475569; line-height: 1.6; }
+    .diagram { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 16px 0; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 16px 0; }
+    th { background: #1e40af; color: #fff; padding: 10px; text-align: left; }
+    td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; }
+    tr:nth-child(even) td { background: #f8fafc; }
+    .badge { display: inline-block; background: #dbeafe; color: #1d4ed8; padding: 4px 14px; border-radius: 16px; font-size: 0.85rem; font-weight: 600; }
+    .print-btn { position: fixed; bottom: 20px; right: 20px; background: #2563eb; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <button class="print-btn no-print" onclick="window.print()">Save as PDF</button>
+  <div class="page">
+    <h1>E-Commerce Database System</h1>
+    <p style="text-align:center"><span class="badge">Django REST + MySQL Cloud + Render</span></p>
+    <p style="text-align:center;color:#64748b">Complete ER Schema · Cart Values · Order Tracking · Architecture</p>
+
+    <h2>Design 1 — Full Entity Relationship Schema</h2>
+    <p>Includes explicit <strong>Cart → CartItem → Product</strong> (cart values) and <strong>Order → OrderTracking</strong> (track order timeline).</p>
+    <div class="diagram">
+      <pre class="mermaid">
+erDiagram
+    USER ||--o| CART : "owns (1:1)"
+    USER ||--o{ ADDRESS : has
+    USER ||--o{ ORDER : places
+
+    CART ||--o{ CART_ITEM : "contains (cart values)"
+    PRODUCT ||--o{ CART_ITEM : "referenced in cart"
+
+    CATEGORY ||--o{ PRODUCT : contains
+    PRODUCT ||--o{ ORDER_ITEM : "sold in order"
+
+    ORDER ||--o{ ORDER_ITEM : contains
+    ORDER ||--|| PAYMENT : "payment tracking"
+    ORDER ||--o{ ORDER_TRACKING : "track order timeline"
+    ADDRESS ||--o{ ORDER : "ships to"
+
+    USER {
+        int id PK
+        string username UK
+        string email UK
+        string password_hash
+    }
+
+    USER_PROFILE {
+        int id PK
+        int user_id FK UK
+        string phone
+    }
+
+    CART {
+        int id PK
+        int user_id FK UK
+        datetime updated_at
+    }
+
+    CART_ITEM {
+        int id PK
+        int cart_id FK
+        int product_id FK
+        int quantity
+        decimal line_total "computed: qty * price"
+    }
+
+    CATEGORY {
+        int id PK
+        string name UK
+        string slug UK
+    }
+
+    PRODUCT {
+        int id PK
+        int category_id FK
+        string name
+        decimal price
+        int stock_quantity
+        string image_url
+    }
+
+    ADDRESS {
+        int id PK
+        int user_id FK
+        string full_name
+        string line1
+        string city
+        string pincode
+    }
+
+    ORDER {
+        int id PK
+        int user_id FK
+        int address_id FK
+        decimal total_amount
+        enum status
+        datetime order_date
+    }
+
+    ORDER_ITEM {
+        int id PK
+        int order_id FK
+        int product_id FK
+        int quantity
+        decimal unit_price
+        decimal subtotal
+    }
+
+    PAYMENT {
+        int id PK
+        int order_id FK UK
+        string payment_method
+        decimal amount
+        enum status
+        string transaction_id
+    }
+
+    ORDER_TRACKING {
+        int id PK
+        int order_id FK
+        enum status
+        string message
+        string location
+        datetime recorded_at
+    }
+      </pre>
+    </div>
+
+    <h3>Cart Value Calculation</h3>
+    <table>
+      <tr><th>Concept</th><th>SQL / Logic</th></tr>
+      <tr><td>Line total</td><td>cart_item.quantity × product.price</td></tr>
+      <tr><td>Cart subtotal</td><td>SUM(line_total) for all cart_items in user's cart</td></tr>
+      <tr><td>Constraint</td><td>UNIQUE(cart_id, product_id) — one row per product per cart</td></tr>
+    </table>
+
+    <h3>Order Tracking Flow</h3>
+    <table>
+      <tr><th>Status</th><th>Meaning</th></tr>
+      <tr><td>pending</td><td>Order placed</td></tr>
+      <tr><td>confirmed</td><td>Payment confirmed / seller accepted</td></tr>
+      <tr><td>processing</td><td>Being packed</td></tr>
+      <tr><td>shipped</td><td>Left warehouse</td></tr>
+      <tr><td>out_for_delivery</td><td>With delivery partner</td></tr>
+      <tr><td>delivered</td><td>Completed</td></tr>
+    </table>
+
+    <div class="break"></div>
+
+    <h2>Design 2 — System Architecture (Render)</h2>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart TB
+    subgraph Client
+        Browser["React Frontend\n(Vite + Three.js)"]
+    end
+
+    subgraph Render["Render.com"]
+        FE["Static Site\nfrontend/"]
+        BE["Web Service\nbackend/\nDjango + Gunicorn"]
+        Ping["Google Apps Script\nPing every 1 min\n(keep awake)"]
+    end
+
+    subgraph Cloud["Cloud MySQL"]
+        DB[("MySQL 8\nRailway / TiDB / Aiven")]
+        Views["Views: v_cart_summary\nv_order_tracking"]
+        Triggers["Triggers: stock, status log"]
+    end
+
+    Browser -->|HTTPS REST API| BE
+    Browser --> FE
+    Ping -->|GET /api/health/| BE
+    BE -->|mysqlclient + SSL| DB
+    DB --> Views
+    DB --> Triggers
+
+    style Render fill:#1a1a2e,color:#fff
+    style Cloud fill:#dcfce7
+      </pre>
+    </div>
+
+    <h2>Design 3 — Cart to Order Data Flow</h2>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart LR
+    subgraph CartModule["Cart Module"]
+        C1["CART\n(user_id)"]
+        CI["CART_ITEM\nqty, product_id"]
+        CV["Cart Value\nSUM(qty × price)"]
+        C1 --> CI --> CV
+    end
+
+    subgraph OrderModule["Order Module"]
+        O["ORDER"]
+        OI["ORDER_ITEM\nunit_price snapshot"]
+        P["PAYMENT"]
+        T["ORDER_TRACKING\ntimeline events"]
+        O --> OI
+        O --> P
+        O --> T
+    end
+
+    CI -->|"Checkout\n@transaction.atomic"| O
+      </pre>
+    </div>
+
+    <h2>Design 4 — Folder Structure (Deploy Ready)</h2>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart TB
+    Root["DBMS/"]
+    Root --> BE["backend/\nDjango REST API"]
+    Root --> FE["frontend/\nReact + Vite"]
+    Root --> DOC["docs/\ndesigns, ping script"]
+    BE --> B1["accounts/ catalog/ cart/ orders/"]
+    BE --> B2["sql_scripts/ config/"]
+    FE --> F1["src/pages/ components/"]
+      </pre>
+    </div>
+  </div>
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="{% block meta_desc %}Meridian — shop electronics, fashion, books, sports &amp; beauty with fast delivery across India.{% endblock %}">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>{% block title %}Meridian{% endblock %}</title>
+  <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+</head>
+<body>
+
+  <!-- Amazon-style header -->
+  <header class="amz-header">
+    <div class="amz-header-top">
+      <div class="container amz-header-inner">
+        <a href="{% url 'home' %}" class="amz-logo">meridian</a>
+
+        <div class="amz-deliver">
+          <span class="amz-deliver-label">Deliver to</span>
+          <strong>India</strong>
+        </div>
+
+        <form class="amz-search" action="{% url 'home' %}" method="get" role="search">
+          <select class="amz-search-cat" name="category" aria-label="Category">
+            <option value="">All</option>
+            {% for cat in nav_categories %}
+            <option value="{{ cat.slug }}" {% if request.GET.category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+          </select>
+          <div class="amz-search-wrap">
+            <input type="search" id="search-input" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Search Meridian" aria-label="Search"
+              data-suggest-url="{% url 'search_suggest' %}" autocomplete="off">
+            <div id="search-suggestions" class="search-suggestions" hidden></div>
+          </div>
+          <button type="submit" aria-label="Search">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+          </button>
+        </form>
+
+        <div class="amz-header-right">
+          {% if user.is_authenticated %}
+          <a href="{% url 'profile' %}" class="amz-account">
+            <span class="amz-small">Hello, {{ user.first_name|default:user.username }}</span>
+            <strong>Account &amp; Lists</strong>
+          </a>
+          <a href="{% url 'orders' %}" class="amz-orders">
+            <span class="amz-small">Returns</span>
+            <strong>&amp; Orders</strong>
+          </a>
+          <a href="{% url 'cart' %}" class="amz-cart">
+            <span class="amz-cart-icon">🛒</span>
+            <strong>Cart</strong>
+            {% if cart_count %}<span class="amz-cart-count">{{ cart_count }}</span>{% endif %}
+          </a>
+          <form action="{% url 'logout' %}" method="post" class="amz-logout">{% csrf_token %}
+            <button type="submit">Sign out</button>
+          </form>
+          {% else %}
+          <a href="{% url 'login' %}" class="amz-account">
+            <span class="amz-small">Hello, sign in</span>
+            <strong>Account</strong>
+          </a>
+          <a href="{% url 'register' %}" class="amz-orders"><strong>Register</strong></a>
+          <a href="{% url 'login' %}?next={% url 'cart' %}" class="amz-cart">
+            <span class="amz-cart-icon">🛒</span>
+            <strong>Cart</strong>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <nav class="amz-nav">
+      <div class="container amz-nav-inner">
+        <a href="{% url 'home' %}" class="amz-nav-all">☰ All</a>
+        {% for cat in nav_categories %}
+        <a href="{% url 'home' %}?category={{ cat.slug }}">{{ cat.name }}</a>
+        {% endfor %}
+        {% if user.is_staff %}
+        <a href="{% url 'db_insights' %}" class="amz-nav-admin">DB Insights</a>
+        {% endif %}
+      </div>
+    </nav>
+  </header>
+
+  {% if messages %}
+  <div class="container">
+    <ul class="messages">
+      {% for message in messages %}
+      <li class="{{ message.tags }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
+
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="amz-footer">
+    <div class="amz-footer-back"><a href="#top">Back to top</a></div>
+    <div class="container amz-footer-grid">
+      <div>
+        <h4>Get to Know Us</h4>
+        <a href="#">About Meridian</a>
+        <a href="#">Careers</a>
+      </div>
+      <div>
+        <h4>Make Money with Us</h4>
+        <a href="#">Sell on Meridian</a>
+        <a href="#">Become a Seller</a>
+      </div>
+      <div>
+        <h4>Let Us Help You</h4>
+        <a href="{% url 'orders' %}">Your Orders</a>
+        <a href="{% url 'profile' %}">Your Account</a>
+        <a href="{% url 'cart' %}">Your Cart</a>
+      </div>
+      <div>
+        <h4>Connect</h4>
+        <a href="#">Help Centre</a>
+        <a href="#">Returns Policy</a>
+      </div>
+    </div>
+    <div class="amz-footer-bottom">
+      <span class="amz-logo-sm">meridian</span>
+      <p>© {% now "Y" %} Meridian Commerce · Django + MySQL · Secure checkout</p>
+    </div>
+  </footer>
+
+  {% block extra_js %}{% endblock %}
+  <script src="{% static 'js/search.js' %}"></script>
+  <script src="{% static 'js/cart.js' %}"></script>
+</body>
+</html>

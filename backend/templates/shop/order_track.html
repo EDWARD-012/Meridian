@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% load shop_extras %}
+{% block title %}Order #{{ order.id }} · Meridian{% endblock %}
+{% block content %}
+<div class="container track-page">
+
+  <nav class="breadcrumb">
+    <a href="{% url 'home' %}">Home</a> ›
+    <a href="{% url 'orders' %}">Your Orders</a> ›
+    <span>Order #{{ order.id }}</span>
+  </nav>
+
+  <div class="track-header">
+    <div>
+      <h1 class="section-title" style="margin-bottom:0.35rem">
+        {% if order.status == 'delivered' %}
+          Delivered
+        {% elif order.status == 'cancelled' %}
+          Order cancelled
+        {% elif order.status == 'shipped' or order.status == 'out_for_delivery' %}
+          Arriving soon
+        {% else %}
+          Order placed
+        {% endif %}
+      </h1>
+      <p class="track-sub">Placed on {{ order.order_date|date:"l, d F Y" }} · Order #{{ order.id }}</p>
+    </div>
+    <div class="track-badges">
+      <span class="status-pill status-{{ order.status }}">{{ order.get_status_display }}</span>
+      <span class="payment-pill payment-{{ order.payment.status }}">Payment: {{ order.payment.get_status_display }}</span>
+    </div>
+  </div>
+
+  {% if show_pay_now %}
+  <div class="pay-banner">
+    <div>
+      <strong>Payment pending</strong>
+      <p>Complete your Razorpay payment to confirm this order.</p>
+    </div>
+    <a href="{% url 'razorpay_pay' order.id %}" class="btn btn-amz-yellow">Pay ₹{{ order.total_amount|floatformat:0 }} now</a>
+  </div>
+  {% endif %}
+
+  {% if order.status != 'cancelled' %}
+  <section class="track-progress-card">
+    <h2 class="track-section-title">Delivery status</h2>
+    <div class="progress-steps">
+      {% for code, label in status_steps %}
+      <div class="progress-step {% if forloop.counter0 < current_step %}done{% elif forloop.counter0 == current_step %}active{% endif %}">
+        <div class="progress-dot"></div>
+        <span class="progress-label">{{ label }}</span>
+      </div>
+      {% if not forloop.last %}<div class="progress-line {% if forloop.counter0 < current_step %}done{% endif %}"></div>{% endif %}
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <div class="track-grid">
+    <section class="track-panel">
+      <h2 class="track-section-title">Shipment details</h2>
+      <dl class="track-dl">
+        <dt>Ship to</dt>
+        <dd>
+          <strong>{{ order.address.full_name }}</strong><br>
+          {{ order.address.line1 }}<br>
+          {{ order.address.city }}, {{ order.address.state }} — {{ order.address.pincode }}
+        </dd>
+        <dt>Payment method</dt>
+        <dd class="capitalize">{{ order.payment.get_payment_method_display }}</dd>
+        <dt>Payment status</dt>
+        <dd><span class="payment-pill payment-{{ order.payment.status }}">{{ order.payment.get_status_display }}</span></dd>
+        {% if order.payment.transaction_id %}
+        <dt>Transaction ID</dt>
+        <dd><code class="txn-id">{{ order.payment.transaction_id }}</code></dd>
+        {% endif %}
+        {% if order.payment.paid_at %}
+        <dt>Paid on</dt>
+        <dd>{{ order.payment.paid_at|date:"d M Y, H:i" }}</dd>
+        {% endif %}
+      </dl>
+    </section>
+
+    <section class="track-panel" id="invoice">
+      <h2 class="track-section-title">Order summary</h2>
+      <div class="summary-rows">
+        <div class="summary-row"><span>Items subtotal</span><span>₹{{ order.total_amount|floatformat:0 }}</span></div>
+        <div class="summary-row"><span>Shipping</span><span class="text-success">FREE</span></div>
+        <div class="summary-row total"><span>Order total</span><span>₹{{ order.total_amount|floatformat:0 }}</span></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="track-panel track-items-panel">
+    <h2 class="track-section-title">Items in this order</h2>
+    {% for item in order.items.all %}
+    <div class="track-item-row">
+      <a href="{% url 'product_detail' item.product.slug %}">
+        <img src="{{ item.product|product_img }}" alt="{{ item.product.name }}">
+      </a>
+      <div class="track-item-info">
+        <a href="{% url 'product_detail' item.product.slug %}"><strong>{{ item.product.name }}</strong></a>
+        <p class="muted">Qty: {{ item.quantity }} · ₹{{ item.unit_price|floatformat:0 }} each</p>
+        <p class="card-delivery">FREE delivery</p>
+      </div>
+      <div class="track-item-price">₹{{ item.subtotal|floatformat:0 }}</div>
+    </div>
+    {% endfor %}
+  </section>
+
+  <section class="track-panel">
+    <h2 class="track-section-title">Tracking timeline</h2>
+    {% if order.tracking_events.all %}
+    <div class="timeline-v2">
+      {% for event in order.tracking_events.all %}
+      <div class="timeline-v2-item {% if event.status == order.status %}active{% else %}done{% endif %}">
+        <div class="timeline-v2-dot"></div>
+        <div class="timeline-v2-content">
+          <div class="timeline-v2-title">{{ event.get_status_display }}</div>
+          <div class="timeline-v2-msg">{{ event.message }}{% if event.location %} · {{ event.location }}{% endif %}</div>
+          <div class="timeline-v2-time">{{ event.recorded_at|date:"d M Y, H:i" }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="muted">Tracking updates will appear here once your order is processed.</p>
+    {% endif %}
+  </section>
+
+  <div class="track-footer-actions">
+    <a href="{% url 'orders' %}" class="btn btn-outline">← Back to orders</a>
+    <a href="{% url 'home' %}" class="btn btn-amz-yellow">Continue shopping</a>
+  </div>
+</div>
+{% endblock %}
