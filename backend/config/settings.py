@@ -1,9 +1,25 @@
 from pathlib import Path
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
+
 from decouple import config, Csv
 from django.core.exceptions import ImproperlyConfigured
 import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def _strip_mysql_ssl_query_params(url: str) -> str:
+    """mysqlclient rejects ssl-mode in the URL; SSL is set via OPTIONS instead."""
+    if not url or "?" not in url:
+        return url
+    parsed = urlparse(url)
+    query = [
+        (key, value)
+        for key, value in parse_qsl(parsed.query, keep_blank_values=True)
+        if key.lower() not in {"ssl-mode", "ssl_mode"}
+    ]
+    return urlunparse(parsed._replace(query=urlencode(query)))
+
 
 _DEV_SECRET = "dev-only-change-in-production"
 SECRET_KEY = config("SECRET_KEY", default=_DEV_SECRET)
@@ -70,7 +86,7 @@ if USE_SQLITE:
         }
     }
 elif DATABASE_URL:
-    DATABASES = {"default": dj_database_url.parse(DATABASE_URL)}
+    DATABASES = {"default": dj_database_url.parse(_strip_mysql_ssl_query_params(DATABASE_URL))}
     _parsed_opts = DATABASES["default"].get("OPTIONS", {})
     for _bad_key in ("ssl-mode", "ssl_mode"):
         _parsed_opts.pop(_bad_key, None)
